@@ -53,7 +53,7 @@ const JoinGame: React.FC = () => {
                   
                   // Auto-focus next input
                   if (e.target.value && i < 5) {
-                    const nextInput = e.target.parentElement?.nextElementSibling?.querySelector('input');
+                    const nextInput = e.currentTarget.parentElement?.nextElementSibling?.querySelector('input');
                     if (nextInput) {
                       (nextInput as HTMLInputElement).focus();
                     }
@@ -62,7 +62,7 @@ const JoinGame: React.FC = () => {
                 onKeyDown={(e) => {
                   // Handle backspace to focus previous input
                   if (e.key === 'Backspace' && !gameCode[i] && i > 0) {
-                    const prevInput = e.target.parentElement?.previousElementSibling?.querySelector('input');
+                    const prevInput = e.currentTarget.parentElement?.previousElementSibling?.querySelector('input');
                     if (prevInput) {
                       (prevInput as HTMLInputElement).focus();
                     }
@@ -75,13 +75,23 @@ const JoinGame: React.FC = () => {
         </div>
       </div>
       
-      <Button 
-        onClick={handleJoin}
-        disabled={gameCode.length !== 6 || isLoading}
-        className="game-button w-40"
-      >
-        {isLoading ? 'Joining...' : 'JOIN'}
-      </Button>
+      <div className="flex flex-col space-y-4 w-full max-w-xs">
+        <Button 
+          onClick={handleJoin}
+          disabled={gameCode.length !== 6 || isLoading}
+          className="game-button w-full"
+        >
+          {isLoading ? 'Joining...' : 'JOIN'}
+        </Button>
+        
+        <Button 
+          onClick={() => navigate('/')} 
+          variant="outline"
+          className="w-full bg-gray-700 hover:bg-gray-600 text-white"
+        >
+          BACK TO MAIN MENU
+        </Button>
+      </div>
     </div>
   );
 };
