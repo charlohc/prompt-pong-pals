@@ -20,12 +20,13 @@ const GameSelection: React.FC = () => {
     if (!infoType) return null;
 
     return (
-      <div className="info-popup animate-fade-in">
+      <div className="info-popup animate-fade-in relative">
         <button 
           onClick={() => setInfoType(null)} 
           className="absolute top-2 right-2 text-gray-400 hover:text-white"
+          aria-label="Close info"
         >
-          <X size={16} />
+          <X size={20} />
         </button>
         
         <h3 className="text-xl font-bold mb-4">{infoType === 'image' ? 'Image Prompt' : 'Text Prompt'}</h3>
