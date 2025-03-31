@@ -20,23 +20,25 @@ const GameSelection: React.FC = () => {
     if (!infoType) return null;
 
     return (
-      <div className="info-popup animate-fade-in relative">
-        <button 
-          onClick={() => setInfoType(null)} 
-          className="absolute top-2 right-2 text-gray-400 hover:text-white"
-          aria-label="Close info"
-        >
-          <X size={20} />
-        </button>
-        
-        <h3 className="text-xl font-bold mb-4">{infoType === 'image' ? 'Image Prompt' : 'Text Prompt'}</h3>
-        
-        <p className="text-gray-300">
-          {infoType === 'image' 
-            ? 'Players will receive an image and have to prompt to the AI so that it creates an more or less replica of the image given'
-            : 'Players will receive an text and have to prompt to the AI so that it creates an more or less replica of the text given'
-          }
-        </p>
+      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+        <div className="info-popup animate-fade-in relative max-w-md w-full mx-4">
+          <button 
+            onClick={() => setInfoType(null)} 
+            className="absolute top-2 right-2 text-gray-400 hover:text-white"
+            aria-label="Close info"
+          >
+            <X size={20} />
+          </button>
+          
+          <h3 className="text-xl font-bold mb-4">{infoType === 'image' ? 'Image Prompt' : 'Text Prompt'}</h3>
+          
+          <p className="text-gray-300">
+            {infoType === 'image' 
+              ? 'Players will receive an image and have to prompt to the AI so that it creates an more or less replica of the image given'
+              : 'Players will receive an text and have to prompt to the AI so that it creates an more or less replica of the text given'
+            }
+          </p>
+        </div>
       </div>
     );
   };
