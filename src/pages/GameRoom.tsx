@@ -114,7 +114,7 @@ const GameRoom: React.FC = () => {
           <div className="relative">
             <div className="border-b border-gray-700 mb-4"></div>
             <div className="absolute left-1/2 -translate-x-1/2 -top-3 bg-game-background px-4">
-              {isRoundComplete ? 'Complete!' : `${30}s`}
+              {isRoundComplete ? 'Complete!' : ``}
             </div>
           </div>
           
