@@ -86,8 +86,7 @@ const JoinGame: React.FC = () => {
         
         <Button 
           onClick={() => navigate('/')} 
-          variant="outline"
-          className="w-full bg-gray-700 hover:bg-gray-600 text-white"
+          className="game-button w-full"
         >
           BACK TO MAIN MENU
         </Button>
