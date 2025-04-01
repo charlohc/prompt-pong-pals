@@ -50,6 +50,32 @@ const GameRoom: React.FC = () => {
   }
   
   const handlePromptSubmit = async (prompt: string) => {
+    if (!isCurrentPlayerActive && !submittedPrompt) {
+      // Handle simulated teammate submission
+      const activePlayer = currentTeam.players[currentTeam.currentPlayerIndex];
+      toast.info(`${activePlayer.name} submitted their prompt`);
+      setSubmittedPrompt(true);
+      
+      // Simulate API delay
+      setTimeout(async () => {
+        const success = await submitPrompt(prompt);
+        
+        if (success) {
+          setIsRoundComplete(true);
+          toast.success(`${activePlayer.name}'s prompt was successful!`);
+        } else {
+          toast.info(`${activePlayer.name}'s prompt was submitted but not quite there yet. Next player's turn!`);
+          setTimeout(() => {
+            setSubmittedPrompt(false);
+            setShowAIResponse(false);
+            setInputDisabled(false);
+          }, 3000);
+        }
+      }, 1000);
+      
+      return;
+    }
+    
     if (!isCurrentPlayerActive) {
       toast.error("It's not your turn to submit!");
       return;
