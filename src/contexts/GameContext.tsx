@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export type GameType = 'text' | 'image';
@@ -14,20 +13,30 @@ export interface Prompt {
 export interface Player {
   id: number;
   name: string;
+  isMuted: boolean;
+}
+
+export interface Team {
+  id: number;
+  name: string;
+  players: Player[];
+  currentPlayerIndex: number;
+  score: number;
+  prompts: Prompt[];
 }
 
 export interface GameState {
   gameId: string;
-  players: Player[];
-  currentPlayerIndex: number;
+  gamePin: string;
+  teams: Team[];
+  currentTeamIndex: number;
   gameType: GameType;
   challenge: string;
   target: string;
-  prompts: Prompt[];
   currentRound: number;
   totalRounds: number;
   gameOver: boolean;
-  score: number;
+  gameStarted: boolean;
 }
 
 interface GameContextType {
@@ -38,18 +47,25 @@ interface GameContextType {
   selectedGameType: GameType | null;
   setSelectedGameType: React.Dispatch<React.SetStateAction<GameType | null>>;
   createGame: (type: GameType, playerCount: PlayerNumber) => void;
-  joinGame: (gameId: string) => Promise<boolean>;
+  joinGame: (gamePin: string) => Promise<boolean>;
   submitPrompt: (prompt: string) => Promise<boolean>;
   startNewRound: () => void;
   resetGame: () => void;
+  currentPlayer: Player | null;
+  currentTeam: Team | null;
+  isCurrentPlayerActive: boolean;
+  toggleMute: (playerId: number, teamId: number) => void;
+  setTeamName: (teamId: number, name: string) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [playerCount, setPlayerCount] = useState<PlayerNumber>(2);
+  const [playerCount, setPlayerCount] = useState<PlayerNumber>(4);
   const [selectedGameType, setSelectedGameType] = useState<GameType | null>(null);
+  const [currentPlayerId, setCurrentPlayerId] = useState<number>(1);
+  const [currentTeamId, setCurrentTeamId] = useState<number>(1);
 
   // Mock challenges for demo purposes
   const textChallenges = [
@@ -74,43 +90,126 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   ];
 
+  // Generate a random pin
+  const generatePin = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  // Create mock teams with players
+  const createMockTeams = (playerCount: PlayerNumber) => {
+    const totalTeams = 3; // Including the user's team
+    const teams: Team[] = [];
+    
+    // User's team (Team 1)
+    const userTeam: Team = {
+      id: 1,
+      name: "Team 1",
+      players: Array.from({ length: playerCount }, (_, i) => ({
+        id: i + 1,
+        name: i === 0 ? "You" : `Teammate ${i + 1}`,
+        isMuted: false
+      })),
+      currentPlayerIndex: 0,
+      score: 0,
+      prompts: []
+    };
+    teams.push(userTeam);
+    
+    // Other mock teams
+    for (let t = 2; t <= totalTeams; t++) {
+      teams.push({
+        id: t,
+        name: `Team ${t}`,
+        players: Array.from({ length: playerCount }, (_, i) => ({
+          id: t * 10 + i + 1,
+          name: `Team ${t} Player ${i + 1}`,
+          isMuted: Math.random() > 0.7
+        })),
+        currentPlayerIndex: 0,
+        score: Math.floor(Math.random() * 50),
+        prompts: []
+      });
+    }
+    
+    return teams;
+  };
+
   // This would be server-side in a real implementation
   const createGame = (type: GameType, playerCount: PlayerNumber) => {
     const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const gamePin = generatePin();
     const challenge = type === 'text' ? 
       textChallenges[Math.floor(Math.random() * textChallenges.length)] : 
       imageChallenges[Math.floor(Math.random() * imageChallenges.length)];
     
-    const players = Array.from({ length: playerCount }, (_, i) => ({
-      id: i + 1,
-      name: `Player ${i + 1}`
-    }));
-
+    const teams = createMockTeams(playerCount);
+    
     setGameState({
       gameId,
-      players,
-      currentPlayerIndex: 0,
+      gamePin,
+      teams,
+      currentTeamIndex: 0, // User's team goes first
       gameType: type,
       challenge: challenge.challenge,
       target: challenge.target,
-      prompts: [],
       currentRound: 1,
       totalRounds: 3,
       gameOver: false,
-      score: 0
+      gameStarted: false
     });
+    
+    // Set the current player as first player of first team
+    setCurrentPlayerId(1);
+    setCurrentTeamId(1);
 
     return gameId;
   };
 
   // Mock join game function
-  const joinGame = async (gameId: string): Promise<boolean> => {
-    // In a real app, this would verify the game ID with a server
-    if (gameId.length === 6) {
+  const joinGame = async (pin: string): Promise<boolean> => {
+    // In a real app, this would verify the game PIN with a server
+    // For demo, accept specific pins
+    if (pin === "123456" || pin === gameState?.gamePin) {
+      if (!gameState) {
+        // Create a new game if joining with test PIN
+        const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const challenge = textChallenges[Math.floor(Math.random() * textChallenges.length)];
+        const teams = createMockTeams(playerCount);
+        
+        setGameState({
+          gameId,
+          gamePin: pin,
+          teams,
+          currentTeamIndex: 0,
+          gameType: 'text',
+          challenge: challenge.challenge,
+          target: challenge.target,
+          currentRound: 1,
+          totalRounds: 3,
+          gameOver: false,
+          gameStarted: false
+        });
+        
+        setCurrentPlayerId(1);
+        setCurrentTeamId(1);
+      }
       return true;
     }
     return false;
   };
+
+  // Get current team and player
+  const currentTeam = gameState ? 
+    gameState.teams.find(team => team.id === currentTeamId) || null : 
+    null;
+    
+  const currentPlayer = currentTeam ? 
+    currentTeam.players.find(player => player.id === currentPlayerId) || null : 
+    null;
+    
+  const isCurrentPlayerActive = currentTeam ? 
+    currentTeam.currentPlayerIndex === currentTeam.players.findIndex(p => p.id === currentPlayerId) : 
+    false;
 
   // Simulate AI evaluation of prompts
   const evaluatePrompt = (prompt: string, target: string): { success: boolean, response: string } => {
@@ -136,37 +235,48 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const submitPrompt = async (promptText: string): Promise<boolean> => {
-    if (!gameState) return false;
+    if (!gameState || !currentTeam) return false;
     
     const evaluation = evaluatePrompt(promptText, gameState.target);
     
     const newPrompt: Prompt = {
       text: promptText,
-      player: gameState.players[gameState.currentPlayerIndex].id,
+      player: currentPlayerId,
       aiResponse: evaluation.response,
       success: evaluation.success
     };
     
-    const updatedPrompts = [...gameState.prompts, newPrompt];
+    // Update team prompts
+    const updatedTeams = gameState.teams.map(team => {
+      if (team.id === currentTeamId) {
+        return {
+          ...team,
+          prompts: [...team.prompts, newPrompt],
+          score: evaluation.success ? team.score + 10 : team.score
+        };
+      }
+      return team;
+    });
     
-    // If successful, prepare for next round
+    // If successful, prepare for next round or end game
     if (evaluation.success) {
       setGameState({
         ...gameState,
-        prompts: updatedPrompts,
-        score: gameState.score + 10,
+        teams: updatedTeams,
         gameOver: gameState.currentRound >= gameState.totalRounds,
       });
       return true;
     }
     
-    // Move to next player
-    const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    // Move to next player in the team
+    const updatedTeamIndex = updatedTeams.findIndex(team => team.id === currentTeamId);
+    const nextPlayerIndex = (currentTeam.currentPlayerIndex + 1) % currentTeam.players.length;
+    
+    updatedTeams[updatedTeamIndex].currentPlayerIndex = nextPlayerIndex;
     
     setGameState({
       ...gameState,
-      prompts: updatedPrompts,
-      currentPlayerIndex: nextPlayerIndex,
+      teams: updatedTeams,
     });
     
     return false;
@@ -179,19 +289,78 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       textChallenges[Math.floor(Math.random() * textChallenges.length)] : 
       imageChallenges[Math.floor(Math.random() * imageChallenges.length)];
     
+    // Reset all teams for new round
+    const updatedTeams = gameState.teams.map(team => ({
+      ...team,
+      prompts: [],
+      currentPlayerIndex: Math.floor(Math.random() * team.players.length), // Random player starts
+    }));
+    
     setGameState({
       ...gameState,
+      teams: updatedTeams,
       challenge: newChallenge.challenge,
       target: newChallenge.target,
-      prompts: [],
       currentRound: gameState.currentRound + 1,
-      currentPlayerIndex: Math.floor(Math.random() * gameState.players.length), // Random player starts
+      currentTeamIndex: Math.floor(Math.random() * updatedTeams.length), // Random team starts
     });
   };
 
   const resetGame = () => {
     setGameState(null);
     setSelectedGameType(null);
+    setCurrentPlayerId(1);
+    setCurrentTeamId(1);
+  };
+
+  // Toggle mute status for a player
+  const toggleMute = (playerId: number, teamId: number) => {
+    if (!gameState) return;
+    
+    const updatedTeams = gameState.teams.map(team => {
+      if (team.id === teamId) {
+        const updatedPlayers = team.players.map(player => {
+          if (player.id === playerId) {
+            return {
+              ...player,
+              isMuted: !player.isMuted
+            };
+          }
+          return player;
+        });
+        
+        return {
+          ...team,
+          players: updatedPlayers
+        };
+      }
+      return team;
+    });
+    
+    setGameState({
+      ...gameState,
+      teams: updatedTeams
+    });
+  };
+
+  // Set team name
+  const setTeamName = (teamId: number, name: string) => {
+    if (!gameState) return;
+    
+    const updatedTeams = gameState.teams.map(team => {
+      if (team.id === teamId) {
+        return {
+          ...team,
+          name
+        };
+      }
+      return team;
+    });
+    
+    setGameState({
+      ...gameState,
+      teams: updatedTeams
+    });
   };
 
   return (
@@ -207,7 +376,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         joinGame,
         submitPrompt,
         startNewRound,
-        resetGame
+        resetGame,
+        currentPlayer,
+        currentTeam,
+        isCurrentPlayerActive,
+        toggleMute,
+        setTeamName
       }}
     >
       {children}

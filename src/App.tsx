@@ -13,7 +13,8 @@ import GameSelection from "./pages/GameSelection";
 import GameDescription from "./pages/GameDescription";
 import GameRoom from "./pages/GameRoom";
 import PostGameChat from "./pages/PostGameChat";
-import JoinGame from "./components/JoinGame";
+import JoinGame from "./pages/JoinGame";
+import TeamSetup from "./pages/TeamSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,7 +33,8 @@ const App = () => (
             <Route path="/game-description" element={<GameDescription />} />
             <Route path="/game-room" element={<GameRoom />} />
             <Route path="/post-game-chat" element={<PostGameChat />} />
-            <Route path="/join" element={<div className="min-h-screen flex items-center justify-center bg-game-background"><JoinGame /></div>} />
+            <Route path="/join" element={<JoinGame />} />
+            <Route path="/team-setup" element={<TeamSetup />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

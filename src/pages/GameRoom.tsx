@@ -2,27 +2,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '@/contexts/GameContext';
-import PromptInput from '@/components/PromptInput';
+import CollaborativePrompt from '@/components/CollaborativePrompt';
 import AIResponse from '@/components/AIResponse';
-import PlayerTurn from '@/components/PlayerTurn';
+import TeamRankings from '@/components/TeamRankings';
+import TeamFeedback from '@/components/TeamFeedback';
 import { Button } from '@/components/ui/button';
+import { Users, Clock, Target } from 'lucide-react';
 import { toast } from 'sonner';
 
 const GameRoom: React.FC = () => {
   const navigate = useNavigate();
-  const { gameState, submitPrompt, startNewRound, resetGame } = useGame();
+  const { 
+    gameState, 
+    submitPrompt, 
+    startNewRound, 
+    resetGame, 
+    currentTeam,
+    currentPlayer,
+    isCurrentPlayerActive
+  } = useGame();
+  
   const [submittedPrompt, setSubmittedPrompt] = useState(false);
   const [showAIResponse, setShowAIResponse] = useState(false);
   const [isRoundComplete, setIsRoundComplete] = useState(false);
   const [inputDisabled, setInputDisabled] = useState(false);
-  const [playerTyping, setPlayerTyping] = useState(false);
   
   useEffect(() => {
-    if (!gameState) {
+    if (!gameState || !currentTeam) {
       navigate('/');
       return;
     }
-  }, [gameState, navigate]);
+  }, [gameState, navigate, currentTeam]);
   
   useEffect(() => {
     if (submittedPrompt) {
@@ -35,24 +45,16 @@ const GameRoom: React.FC = () => {
     }
   }, [submittedPrompt]);
   
-  // Simulate random typing from other players
-  useEffect(() => {
-    if (gameState && !submittedPrompt && !showAIResponse) {
-      const typingInterval = setInterval(() => {
-        setPlayerTyping(Math.random() > 0.7);
-      }, 2000);
-      
-      return () => clearInterval(typingInterval);
-    }
-  }, [gameState, submittedPrompt, showAIResponse]);
-  
-  if (!gameState) {
+  if (!gameState || !currentTeam || !currentPlayer) {
     return <div>Loading...</div>;
   }
   
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  
   const handlePromptSubmit = async (prompt: string) => {
+    if (!isCurrentPlayerActive) {
+      toast.error("It's not your turn to submit!");
+      return;
+    }
+    
     setSubmittedPrompt(true);
     
     const success = await submitPrompt(prompt);
@@ -83,17 +85,17 @@ const GameRoom: React.FC = () => {
   };
   
   const getLatestPrompt = () => {
-    if (gameState.prompts.length === 0) {
+    if (currentTeam.prompts.length === 0) {
       return '';
     }
-    return gameState.prompts[gameState.prompts.length - 1].text;
+    return currentTeam.prompts[currentTeam.prompts.length - 1].text;
   };
   
   const getLatestResponse = () => {
-    if (gameState.prompts.length === 0 || !gameState.prompts[gameState.prompts.length - 1].aiResponse) {
+    if (currentTeam.prompts.length === 0 || !currentTeam.prompts[currentTeam.prompts.length - 1].aiResponse) {
       return '';
     }
-    return gameState.prompts[gameState.prompts.length - 1].aiResponse as string;
+    return currentTeam.prompts[currentTeam.prompts.length - 1].aiResponse as string;
   };
   
   return (
@@ -101,12 +103,24 @@ const GameRoom: React.FC = () => {
       <div className="max-w-4xl mx-auto w-full flex-1 grid grid-cols-3 gap-6">
         <div className="col-span-2 space-y-6">
           <div className="game-card">
-            <h2 className="text-xl font-semibold mb-2">
-              Make the AI recite this text, by typing in the prompt!
-            </h2>
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xl font-semibold">
+                Team Challenge
+              </h2>
+              <div className="flex items-center text-sm text-gray-400">
+                <Clock size={14} className="mr-1" />
+                <span>Round {gameState.currentRound}/{gameState.totalRounds}</span>
+              </div>
+            </div>
             
             <div className="game-card bg-indigo-900/40 prompt-font">
-              <h3 className="font-bold text-indigo-300 mb-1">{gameState.challenge}</h3>
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-bold text-indigo-300">{gameState.challenge}</h3>
+                <div className="text-xs bg-indigo-800/60 px-2 py-0.5 rounded-full">
+                  <Target size={12} className="inline mr-1" />
+                  Target Text
+                </div>
+              </div>
               <p>{gameState.target}</p>
             </div>
           </div>
@@ -114,27 +128,24 @@ const GameRoom: React.FC = () => {
           <div className="relative">
             <div className="border-b border-gray-700 mb-4"></div>
             <div className="absolute left-1/2 -translate-x-1/2 -top-3 bg-game-background px-4">
-              {isRoundComplete ? 'Complete!' : ``}
+              <div className="flex items-center space-x-2">
+                <Users size={14} />
+                <span>{isRoundComplete ? 'Team Success!' : `${currentTeam.name} Collaboration`}</span>
+              </div>
             </div>
           </div>
-          
-          {playerTyping && !submittedPrompt && (
-            <div className="text-gray-400 text-center">
-              Player {(gameState.currentPlayerIndex + 1)} is typing...
-            </div>
-          )}
           
           {showAIResponse ? (
             <AIResponse 
               response={getLatestResponse()} 
               success={isRoundComplete}
               feedbackMessage={isRoundComplete 
-                ? `Congratulations! You did it in ${gameState.prompts.length} ${gameState.prompts.length === 1 ? 'round' : 'rounds'}!` 
-                : 'Your prompt will be served to the next player!'
+                ? `Team ${currentTeam.name} completed the challenge in ${currentTeam.prompts.length} ${currentTeam.prompts.length === 1 ? 'attempt' : 'attempts'}!` 
+                : "Not quite there! Next teammate's turn"
               }
             />
           ) : (
-            <PromptInput 
+            <CollaborativePrompt 
               onSubmit={handlePromptSubmit} 
               previousPrompt={submittedPrompt ? getLatestPrompt() : ''}
               disabled={inputDisabled}
@@ -143,23 +154,23 @@ const GameRoom: React.FC = () => {
           
           {isRoundComplete && (
             <div className="text-center mt-6">
+              <TeamFeedback 
+                success={true}
+                prompts={currentTeam.prompts}
+                challenge={gameState.challenge}
+              />
+              
               <Button 
                 onClick={handleNextRound}
-                className="game-button"
+                className="game-button mt-6"
               >
-                {gameState.gameOver ? 'Finish Game' : 'Next Round'}
+                {gameState.gameOver ? 'See Final Results' : 'Next Challenge'}
               </Button>
             </div>
           )}
         </div>
         
         <div className="space-y-6">
-          <PlayerTurn 
-            players={gameState.players} 
-            currentPlayerIndex={gameState.currentPlayerIndex}
-            currentPlayer={currentPlayer}
-          />
-          
           <div className="game-card">
             <h3 className="text-lg font-semibold mb-2">Game Info</h3>
             <div className="space-y-1 text-sm">
@@ -172,20 +183,46 @@ const GameRoom: React.FC = () => {
                 <span className="capitalize">{gameState.gameType}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Players:</span>
-                <span>{gameState.players.length}</span>
+                <span className="text-gray-400">Your Team:</span>
+                <span>{currentTeam.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Game ID:</span>
-                <span className="font-mono text-xs">{gameState.gameId}</span>
+                <span className="text-gray-400">Teams:</span>
+                <span>{gameState.teams.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Game PIN:</span>
+                <span className="font-mono text-xs">{gameState.gamePin}</span>
               </div>
             </div>
           </div>
           
+          <TeamRankings />
+          
           <div className="game-card">
-            <h3 className="text-lg font-semibold mb-2">Current Score</h3>
-            <div className="text-3xl font-bold text-center text-yellow-400">
-              {gameState.score}
+            <h3 className="text-lg font-semibold mb-2">Your Team</h3>
+            <div className="space-y-2">
+              {currentTeam.players.map((player, index) => {
+                const isActive = currentTeam.currentPlayerIndex === index;
+                return (
+                  <div 
+                    key={player.id} 
+                    className={`flex justify-between items-center p-2 rounded-md ${
+                      isActive ? 'bg-game-accent/20' : 'bg-gray-700/30'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-yellow-400' : 'bg-gray-400'}`}></div>
+                      <span className={player.id === currentPlayer.id ? 'text-yellow-400' : ''}>
+                        {player.name} {player.id === currentPlayer.id ? '(You)' : ''}
+                      </span>
+                    </div>
+                    <div className="text-xs">
+                      {isActive ? 'Active' : index === (currentTeam.currentPlayerIndex + 1) % currentTeam.players.length ? 'Next' : ''}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
           
@@ -197,7 +234,7 @@ const GameRoom: React.FC = () => {
               }}
               className="text-gray-400 hover:text-white"
             >
-              Quit Game
+              Leave Game
             </Button>
           </div>
         </div>
