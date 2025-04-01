@@ -21,9 +21,11 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
   const [prompt, setPrompt] = useState(previousPrompt);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [simulatedPrompt, setSimulatedPrompt] = useState('');
+  const [simulatedSubmitTime, setSimulatedSubmitTime] = useState<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { currentTeam, isCurrentPlayerActive, toggleMute, currentPlayer, gameState } = useGame();
 
+  // Timer for countdown
   useEffect(() => {
     if (disabled || timeLeft <= 0) return;
 
@@ -40,17 +42,17 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
     return () => clearInterval(timer);
   }, [disabled, timeLeft]);
 
+  // Auto-submit when time runs out
   useEffect(() => {
     if (timeLeft === 0) {
       if (isCurrentPlayerActive && prompt.trim()) {
         handleSubmit();
       } else if (!isCurrentPlayerActive && simulatedPrompt.trim()) {
         // Auto-submit teammate's prompt when time runs out
-        const activePlayer = currentTeam?.players[currentTeam?.currentPlayerIndex || 0];
-        console.log(`${activePlayer?.name}'s time ran out, auto-submitting prompt`);
+        onSubmit(simulatedPrompt.trim());
       }
     }
-  }, [timeLeft, isCurrentPlayerActive, simulatedPrompt]);
+  }, [timeLeft, isCurrentPlayerActive, simulatedPrompt, prompt]);
 
   useEffect(() => {
     setPrompt(previousPrompt);
@@ -62,9 +64,9 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
     }
   }, [disabled, isCurrentPlayerActive]);
 
-  // Simulate context-aware typing from teammates
+  // Simulate context-aware typing from teammates with improved realism
   useEffect(() => {
-    if (!isCurrentPlayerActive && currentTeam && gameState) {
+    if (!isCurrentPlayerActive && currentTeam && gameState && !disabled) {
       const activePlayer = currentTeam.players[currentTeam.currentPlayerIndex];
       
       // Generate contextually relevant prompts based on the current challenge
@@ -73,56 +75,64 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
       // Pick a random prompt for this teammate
       const randomPrompt = potentialPrompts[Math.floor(Math.random() * potentialPrompts.length)];
       
-      // Gradually type out the prompt one character at a time
+      // Set a random time for submission between 10 and 60 seconds
+      const randomSubmitTime = Math.floor(10 + Math.random() * 50);
+      setSimulatedSubmitTime(randomSubmitTime);
+      
+      // Create a more realistic typing simulation
       let currentText = '';
       let charIndex = 0;
+      let typingSpeed = 70; // base typing speed in ms
       
-      const typingInterval = setInterval(() => {
+      const simulateTyping = () => {
         if (charIndex < randomPrompt.length) {
           currentText += randomPrompt[charIndex];
           setSimulatedPrompt(currentText);
           charIndex++;
           
-          // Occasionally pause typing to seem more realistic
-          if (Math.random() > 0.8) {
-            clearInterval(typingInterval);
-            
-            // Resume after a short break
-            setTimeout(() => {
-              const resumeInterval = setInterval(() => {
-                if (charIndex < randomPrompt.length) {
-                  currentText += randomPrompt[charIndex];
-                  setSimulatedPrompt(currentText);
-                  charIndex++;
-                } else {
-                  clearInterval(resumeInterval);
-                }
-              }, 100 + Math.random() * 200);
-            }, 800 + Math.random() * 1000);
-          }
-        } else {
-          clearInterval(typingInterval);
+          // Vary typing speed slightly for realism
+          const nextTypingDelay = typingSpeed + (Math.random() * 50 - 25);
           
-          // Simulate teammate finalizing their prompt
-          if (timeLeft > 15 && Math.random() > 0.7) {
-            // Simulate teammate submitting before time runs out
-            const submitDelay = Math.floor(5000 + Math.random() * 7000);
-            setTimeout(() => {
-              console.log(`${activePlayer.name} submitted their prompt!`);
-              // This would trigger the actual submission in a real scenario
-            }, submitDelay);
+          // Occasionally pause typing to simulate thinking
+          if (Math.random() > 0.9) {
+            setTimeout(simulateTyping, 800 + Math.random() * 1200);
+          } 
+          // Occasionally delete a few characters to simulate correction
+          else if (charIndex > 5 && Math.random() > 0.95) {
+            const deleteCount = Math.floor(1 + Math.random() * 3);
+            currentText = currentText.slice(0, -deleteCount);
+            setSimulatedPrompt(currentText);
+            setTimeout(simulateTyping, 300 + Math.random() * 400);
+          } 
+          // Normal typing
+          else {
+            setTimeout(simulateTyping, nextTypingDelay);
           }
         }
-      }, 100 + Math.random() * 200);
+      };
+      
+      // Start typing after a short delay
+      setTimeout(simulateTyping, 1000 + Math.random() * 2000);
       
       return () => {
-        clearInterval(typingInterval);
         setSimulatedPrompt('');
+        setSimulatedSubmitTime(null);
       };
-    } else {
-      setSimulatedPrompt('');
     }
-  }, [isCurrentPlayerActive, currentTeam, gameState, timeLeft]);
+  }, [isCurrentPlayerActive, currentTeam, gameState, disabled]);
+
+  // Handle submission based on the simulated timer
+  useEffect(() => {
+    if (!isCurrentPlayerActive && simulatedSubmitTime !== null && !disabled) {
+      const submitTimer = setTimeout(() => {
+        if (simulatedPrompt.trim()) {
+          onSubmit(simulatedPrompt.trim());
+        }
+      }, simulatedSubmitTime * 1000);
+      
+      return () => clearTimeout(submitTimer);
+    }
+  }, [simulatedSubmitTime, simulatedPrompt, isCurrentPlayerActive, onSubmit, disabled]);
 
   // Generate contextual prompts based on the current challenge
   const getContextualPrompts = (challenge: string, target: string) => {
@@ -163,11 +173,11 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
     } else {
       // Generic prompts if challenge doesn't match any category
       return [
-        `Describe a ${challenge} with vivid details`,
-        `Create a detailed scene about ${challenge}`,
-        `Write a descriptive paragraph about ${challenge}`,
-        `Detail the key elements of ${challenge}`,
-        `Paint a picture with words about ${challenge}`
+        `Describe a ${challenge} with vivid details about its most striking features`,
+        `Create a detailed scene about ${challenge} with emphasis on atmosphere`,
+        `Write a descriptive paragraph about ${challenge} that captures its essence`,
+        `Detail the key elements of ${challenge} with sensory descriptions`,
+        `Paint a picture with words about ${challenge} focusing on its unique aspects`
       ];
     }
   };
@@ -193,6 +203,17 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  // Calculate a progress indicator for teammate typing
+  const getTeammateSubmitIndicator = () => {
+    if (!simulatedSubmitTime || timeLeft > simulatedSubmitTime) return null;
+    
+    return (
+      <span className="text-xs text-yellow-500 animate-pulse">
+        Reviewing prompt...
+      </span>
+    );
+  };
+
   return (
     <div className="relative w-full">
       <div className="mb-2 flex justify-between items-center">
@@ -200,6 +221,7 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
           <span className="font-semibold text-white">
             {isCurrentPlayerActive ? 'Your turn' : `${currentTeam?.players[currentTeam?.currentPlayerIndex || 0].name}'s turn`}
           </span>
+          {!isCurrentPlayerActive && getTeammateSubmitIndicator()}
         </div>
         <div className="text-sm text-yellow-400">
           {formatTime(timeLeft)}
@@ -211,7 +233,7 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
           ref={inputRef}
           value={isCurrentPlayerActive ? prompt : simulatedPrompt}
           onChange={(e) => isCurrentPlayerActive && setPrompt(e.target.value)}
-          placeholder={isCurrentPlayerActive ? "Type your prompt here..." : "Teammate is writing..."}
+          placeholder={isCurrentPlayerActive ? "Type your prompt here..." : ""}
           className={`w-full h-28 p-3 pr-10 bg-gray-700 text-white rounded-md prompt-font resize-none focus:outline-none focus:ring-2 ${
             isCurrentPlayerActive ? 'focus:ring-game-accent border-game-accent/50' : 'focus:ring-gray-600 border-gray-600'
           }`}

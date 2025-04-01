@@ -67,7 +67,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [currentPlayerId, setCurrentPlayerId] = useState<number>(1);
   const [currentTeamId, setCurrentTeamId] = useState<number>(1);
 
-  // Mock challenges for demo purposes
   const textChallenges = [
     {
       challenge: "Haunted House",
@@ -90,17 +89,14 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   ];
 
-  // Generate a random pin
   const generatePin = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
-  // Create mock teams with players
   const createMockTeams = (playerCount: PlayerNumber) => {
     const totalTeams = 3; // Including the user's team
     const teams: Team[] = [];
     
-    // User's team (Team 1)
     const userTeam: Team = {
       id: 1,
       name: "Team 1",
@@ -115,7 +111,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     teams.push(userTeam);
     
-    // Other mock teams
     for (let t = 2; t <= totalTeams; t++) {
       teams.push({
         id: t,
@@ -134,7 +129,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return teams;
   };
 
-  // This would be server-side in a real implementation
   const createGame = (type: GameType, playerCount: PlayerNumber) => {
     const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
     const gamePin = generatePin();
@@ -153,25 +147,20 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       challenge: challenge.challenge,
       target: challenge.target,
       currentRound: 1,
-      totalRounds: 3,
+      totalRounds: 1, // Changed to 1 round
       gameOver: false,
       gameStarted: false
     });
     
-    // Set the current player as first player of first team
     setCurrentPlayerId(1);
     setCurrentTeamId(1);
 
     return gameId;
   };
 
-  // Mock join game function
   const joinGame = async (pin: string): Promise<boolean> => {
-    // In a real app, this would verify the game PIN with a server
-    // For demo, accept specific pins
     if (pin === "123456" || pin === gameState?.gamePin) {
       if (!gameState) {
-        // Create a new game if joining with test PIN
         const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
         const challenge = textChallenges[Math.floor(Math.random() * textChallenges.length)];
         const teams = createMockTeams(playerCount);
@@ -185,7 +174,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           challenge: challenge.challenge,
           target: challenge.target,
           currentRound: 1,
-          totalRounds: 3,
+          totalRounds: 1,
           gameOver: false,
           gameStarted: false
         });
@@ -198,7 +187,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return false;
   };
 
-  // Get current team and player
   const currentTeam = gameState ? 
     gameState.teams.find(team => team.id === currentTeamId) || null : 
     null;
@@ -211,13 +199,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     currentTeam.currentPlayerIndex === currentTeam.players.findIndex(p => p.id === currentPlayerId) : 
     false;
 
-  // Simulate AI evaluation of prompts
   const evaluatePrompt = (prompt: string, target: string): { success: boolean, response: string } => {
-    // This is a simple simulation - in a real app, this would call an AI API
     const words = prompt.split(' ').length;
     const targetWords = target.split(' ').length;
     
-    // If the prompt is too short, it fails
     if (words < 5) {
       return {
         success: false,
@@ -225,7 +210,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
     }
     
-    // If this is not the first prompt and it's reasonably complex, success is more likely
     const success = Math.random() > 0.4;
     
     return {
@@ -246,7 +230,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       success: evaluation.success
     };
     
-    // Update team prompts
     const updatedTeams = gameState.teams.map(team => {
       if (team.id === currentTeamId) {
         return {
@@ -258,17 +241,15 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return team;
     });
     
-    // If successful, prepare for next round or end game
     if (evaluation.success) {
       setGameState({
         ...gameState,
         teams: updatedTeams,
-        gameOver: gameState.currentRound >= gameState.totalRounds,
+        gameOver: true, // Always set to true since there's only 1 round
       });
       return true;
     }
     
-    // Move to next player in the team
     const updatedTeamIndex = updatedTeams.findIndex(team => team.id === currentTeamId);
     const nextPlayerIndex = (currentTeam.currentPlayerIndex + 1) % currentTeam.players.length;
     
@@ -289,7 +270,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       textChallenges[Math.floor(Math.random() * textChallenges.length)] : 
       imageChallenges[Math.floor(Math.random() * imageChallenges.length)];
     
-    // Reset all teams for new round
     const updatedTeams = gameState.teams.map(team => ({
       ...team,
       prompts: [],
@@ -313,7 +293,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentTeamId(1);
   };
 
-  // Toggle mute status for a player
   const toggleMute = (playerId: number, teamId: number) => {
     if (!gameState) return;
     
@@ -343,7 +322,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  // Set team name
   const setTeamName = (teamId: number, name: string) => {
     if (!gameState) return;
     

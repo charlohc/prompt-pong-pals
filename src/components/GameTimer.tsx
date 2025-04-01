@@ -5,19 +5,21 @@ interface GameTimerProps {
   seconds: number;
   onComplete?: () => void;
   running?: boolean;
+  randomEndTime?: number;
 }
 
 const GameTimer: React.FC<GameTimerProps> = ({ 
   seconds, 
   onComplete,
-  running = true
+  running = true,
+  randomEndTime
 }) => {
   const [timeLeft, setTimeLeft] = useState(seconds);
   
   useEffect(() => {
     if (!running) return;
     
-    if (timeLeft <= 0) {
+    if (timeLeft <= 0 || (randomEndTime && timeLeft <= randomEndTime)) {
       onComplete?.();
       return;
     }
@@ -27,7 +29,7 @@ const GameTimer: React.FC<GameTimerProps> = ({
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [timeLeft, onComplete, running]);
+  }, [timeLeft, onComplete, running, randomEndTime]);
   
   useEffect(() => {
     setTimeLeft(seconds);
