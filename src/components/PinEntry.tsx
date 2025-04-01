@@ -44,17 +44,14 @@ const PinEntry: React.FC = () => {
           maxLength={6}
           value={pin}
           onChange={setPin}
-          render={({ slots }) => (
-            <InputOTPGroup>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <InputOTPSlot
-                  key={i}
-                  index={i}
-                />
-              ))}
-            </InputOTPGroup>
-          )}
-        />
+          pattern="^[0-9]*$"
+        >
+          <InputOTPGroup>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <InputOTPSlot key={i} index={i} />
+            ))}
+          </InputOTPGroup>
+        </InputOTP>
       </div>
       
       <div className="text-center mt-2 text-sm text-gray-400">
