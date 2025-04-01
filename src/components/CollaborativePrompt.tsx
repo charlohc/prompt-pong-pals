@@ -21,6 +21,7 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
   const [prompt, setPrompt] = useState(previousPrompt);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [typingActivity, setTypingActivity] = useState('');
+  const [simulatedPrompt, setSimulatedPrompt] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { currentTeam, isCurrentPlayerActive, toggleMute, currentPlayer } = useGame();
 
@@ -59,19 +60,71 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
   // Simulate typing activity from teammates
   useEffect(() => {
     if (!isCurrentPlayerActive && currentTeam) {
-      const typingInterval = setInterval(() => {
-        const shouldType = Math.random() > 0.7;
-        if (shouldType) {
-          const activePlayer = currentTeam.players[currentTeam.currentPlayerIndex];
-          setTypingActivity(`${activePlayer.name} is typing...`);
-          
-          setTimeout(() => {
-            setTypingActivity('');
-          }, 2000);
-        }
-      }, 5000);
+      const activePlayer = currentTeam.players[currentTeam.currentPlayerIndex];
       
-      return () => clearInterval(typingInterval);
+      // Initial typing indicator
+      setTypingActivity(`${activePlayer.name} is typing...`);
+      
+      // Potential prompts that the AI teammate might be working on
+      const potentialPrompts = [
+        "I think we should describe the haunted house with more creaking sounds",
+        "Let's mention the moonlight casting shadows through broken windows",
+        "We need to add some fog creeping along the ground",
+        "I'm thinking about mentioning mysterious footsteps in the attic",
+        "Maybe we should add something about a mysterious portrait with eyes that follow you"
+      ];
+      
+      // Pick a random prompt for this teammate
+      const randomPrompt = potentialPrompts[Math.floor(Math.random() * potentialPrompts.length)];
+      
+      // Gradually type out the prompt one character at a time
+      let currentText = '';
+      let charIndex = 0;
+      
+      const typingInterval = setInterval(() => {
+        if (charIndex < randomPrompt.length) {
+          currentText += randomPrompt[charIndex];
+          setSimulatedPrompt(currentText);
+          charIndex++;
+          
+          // Occasionally pause typing to seem more realistic
+          if (Math.random() > 0.8) {
+            clearInterval(typingInterval);
+            
+            // Resume after a short break
+            setTimeout(() => {
+              const resumeInterval = setInterval(() => {
+                if (charIndex < randomPrompt.length) {
+                  currentText += randomPrompt[charIndex];
+                  setSimulatedPrompt(currentText);
+                  charIndex++;
+                } else {
+                  clearInterval(resumeInterval);
+                }
+              }, 100 + Math.random() * 200);
+            }, 800 + Math.random() * 1000);
+          }
+        } else {
+          clearInterval(typingInterval);
+          
+          // Occasionally show when teammate is thinking
+          setTimeout(() => {
+            setTypingActivity(`${activePlayer.name} is thinking...`);
+            
+            setTimeout(() => {
+              setTypingActivity(`${activePlayer.name} is typing...`);
+            }, 2000 + Math.random() * 3000);
+          }, 1000 + Math.random() * 2000);
+        }
+      }, 100 + Math.random() * 200);
+      
+      return () => {
+        clearInterval(typingInterval);
+        setSimulatedPrompt('');
+        setTypingActivity('');
+      };
+    } else {
+      setSimulatedPrompt('');
     }
   }, [isCurrentPlayerActive, currentTeam]);
 
@@ -113,13 +166,13 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
       <div className="relative">
         <Textarea
           ref={inputRef}
-          value={prompt}
+          value={isCurrentPlayerActive ? prompt : simulatedPrompt}
           onChange={(e) => isCurrentPlayerActive && setPrompt(e.target.value)}
           placeholder={isCurrentPlayerActive ? "Type your prompt here..." : "Waiting for active player to type..."}
           className={`w-full h-28 p-3 pr-10 bg-gray-700 text-white rounded-md prompt-font resize-none focus:outline-none focus:ring-2 ${
-            isCurrentPlayerActive ? 'focus:ring-game-accent border-game-accent/50' : 'focus:ring-gray-600 border-gray-600 opacity-80'
+            isCurrentPlayerActive ? 'focus:ring-game-accent border-game-accent/50' : 'focus:ring-gray-600 border-gray-600'
           }`}
-          disabled={!isCurrentPlayerActive || disabled}
+          disabled={disabled}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && e.ctrlKey && isCurrentPlayerActive) {
               e.preventDefault();
