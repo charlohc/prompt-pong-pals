@@ -46,11 +46,10 @@ const PinEntry: React.FC = () => {
           onChange={setPin}
           render={({ slots }) => (
             <InputOTPGroup>
-              {slots.map((slot, i) => (
+              {Array.from({ length: 6 }).map((_, i) => (
                 <InputOTPSlot
                   key={i}
-                  {...slot}
-                  index={i} // Add the missing index prop
+                  index={i}
                 />
               ))}
             </InputOTPGroup>
