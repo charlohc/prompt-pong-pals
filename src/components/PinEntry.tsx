@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useGame } from '@/contexts/GameContext';
 import { useNavigate } from 'react-router-dom';
@@ -46,11 +46,11 @@ const PinEntry: React.FC = () => {
           onChange={setPin}
           render={({ slots }) => (
             <InputOTPGroup>
-              {slots.map((slot, index) => (
+              {slots.map((slot, i) => (
                 <InputOTPSlot
-                  key={index}
-                  className="w-14 h-16 text-center text-2xl font-bold bg-game-primary border-2 border-game-accent rounded-md text-white focus:outline-none focus:ring-2 focus:ring-game-accent"
+                  key={i}
                   {...slot}
+                  index={i} // Add the missing index prop
                 />
               ))}
             </InputOTPGroup>
