@@ -64,12 +64,12 @@ const GameRoom: React.FC = () => {
           toast.success(`${activePlayer.name}'s prompt was successful!`);
         } else {
           toast.info(`${activePlayer.name}'s prompt was submitted but not quite there yet. Next player's turn!`);
-          // Show feedback for 3 seconds instead of immediate reset
+          // Show feedback for 5 seconds instead of immediate reset
           setTimeout(() => {
             setSubmittedPrompt(false);
             setShowAIResponse(false);
             setInputDisabled(false);
-          }, 3000); // Changed from 3000 to 3000 (already correct)
+          }, 5000); // Changed from 3000 to 5000
         }
       }, 1000);
       
@@ -90,12 +90,12 @@ const GameRoom: React.FC = () => {
       toast.success('Your prompt was successful!');
     } else {
       toast.info('Prompt submitted but not quite there yet. Next player\'s turn!');
-      // Show feedback for 3 seconds
+      // Show feedback for 5 seconds
       setTimeout(() => {
         setSubmittedPrompt(false);
         setShowAIResponse(false);
         setInputDisabled(false);
-      }, 3000); // Changed to show feedback for 3 seconds
+      }, 5000); // Changed from 3000 to 5000
     }
   };
   
@@ -202,10 +202,6 @@ const GameRoom: React.FC = () => {
             <h3 className="text-lg font-semibold mb-2">Game Info</h3>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">Round:</span>
-                <span>{gameState.currentRound} / {gameState.totalRounds}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-gray-400">Mode:</span>
                 <span className="capitalize">{gameState.gameType}</span>
               </div>
@@ -223,8 +219,6 @@ const GameRoom: React.FC = () => {
               </div>
             </div>
           </div>
-          
-          {/* Removed TeamRankings during gameplay */}
           
           <div className="game-card">
             <h3 className="text-lg font-semibold mb-2">Your Team</h3>

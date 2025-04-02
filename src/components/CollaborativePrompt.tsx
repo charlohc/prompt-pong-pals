@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Mic, MicOff, SendIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,7 @@ interface CollaborativePromptProps {
 const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({ 
   onSubmit, 
   previousPrompt = '', 
-  timeLimit = 60, // Changed to 60 seconds (1 minute)
+  timeLimit = 60, // 60 seconds (1 minute)
   disabled = false
 }) => {
   const [prompt, setPrompt] = useState(previousPrompt);
@@ -64,7 +63,7 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
     }
   }, [disabled, isCurrentPlayerActive]);
 
-  // Simulate context-aware typing from teammates with improved realism
+  // Simulate context-aware typing from teammates without typos
   useEffect(() => {
     if (!isCurrentPlayerActive && currentTeam && gameState && !disabled) {
       const activePlayer = currentTeam.players[currentTeam.currentPlayerIndex];
@@ -75,11 +74,11 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
       // Pick a random prompt for this teammate
       const randomPrompt = potentialPrompts[Math.floor(Math.random() * potentialPrompts.length)];
       
-      // Set a random time for submission between 10 and 30 seconds (changed from 10-60)
+      // Set a random time for submission between 10 and 30 seconds
       const randomSubmitTime = Math.floor(10 + Math.random() * 20);
       setSimulatedSubmitTime(randomSubmitTime);
       
-      // Create a more realistic typing simulation
+      // Create a more realistic typing simulation without typos
       let currentText = '';
       let charIndex = 0;
       let typingSpeed = 70; // base typing speed in ms
@@ -97,14 +96,7 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
           if (Math.random() > 0.9) {
             setTimeout(simulateTyping, 800 + Math.random() * 1200);
           } 
-          // Occasionally delete a few characters to simulate correction
-          else if (charIndex > 5 && Math.random() > 0.95) {
-            const deleteCount = Math.floor(1 + Math.random() * 3);
-            currentText = currentText.slice(0, -deleteCount);
-            setSimulatedPrompt(currentText);
-            setTimeout(simulateTyping, 300 + Math.random() * 400);
-          } 
-          // Normal typing
+          // No typos or corrections, just normal typing
           else {
             setTimeout(simulateTyping, nextTypingDelay);
           }

@@ -8,11 +8,6 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
   const { resetGame } = useGame();
 
-  const handlePlay = () => {
-    resetGame();
-    navigate('/player-selection');
-  };
-
   const handleJoin = () => {
     resetGame();
     navigate('/join');
@@ -33,10 +28,6 @@ const Index: React.FC = () => {
         </div>
         
         <div className="space-y-4">
-          <Button onClick={handlePlay} className="game-button w-full py-3">
-            PLAY
-          </Button>
-          
           <Button onClick={handleJoin} className="game-button w-full py-3">
             JOIN
           </Button>
