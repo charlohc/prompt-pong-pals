@@ -15,6 +15,7 @@ import GameRoom from "./pages/GameRoom";
 import PostGameChat from "./pages/PostGameChat";
 import JoinGame from "./pages/JoinGame";
 import TeamSetup from "./pages/TeamSetup";
+import ViewRankings from "./pages/ViewRankings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/post-game-chat" element={<PostGameChat />} />
             <Route path="/join" element={<JoinGame />} />
             <Route path="/team-setup" element={<TeamSetup />} />
+            <Route path="/view-rankings" element={<ViewRankings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

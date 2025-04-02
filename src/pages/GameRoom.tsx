@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '@/contexts/GameContext';
 import CollaborativePrompt from '@/components/CollaborativePrompt';
 import AIResponse from '@/components/AIResponse';
-import TeamRankings from '@/components/TeamRankings';
 import TeamFeedback from '@/components/TeamFeedback';
 import { Button } from '@/components/ui/button';
 import { Users, Clock, Target } from 'lucide-react';
@@ -65,11 +64,12 @@ const GameRoom: React.FC = () => {
           toast.success(`${activePlayer.name}'s prompt was successful!`);
         } else {
           toast.info(`${activePlayer.name}'s prompt was submitted but not quite there yet. Next player's turn!`);
+          // Show feedback for 3 seconds instead of immediate reset
           setTimeout(() => {
             setSubmittedPrompt(false);
             setShowAIResponse(false);
             setInputDisabled(false);
-          }, 3000);
+          }, 3000); // Changed from 3000 to 3000 (already correct)
         }
       }, 1000);
       
@@ -90,17 +90,18 @@ const GameRoom: React.FC = () => {
       toast.success('Your prompt was successful!');
     } else {
       toast.info('Prompt submitted but not quite there yet. Next player\'s turn!');
+      // Show feedback for 3 seconds
       setTimeout(() => {
         setSubmittedPrompt(false);
         setShowAIResponse(false);
         setInputDisabled(false);
-      }, 3000);
+      }, 3000); // Changed to show feedback for 3 seconds
     }
   };
   
   const handleNextRound = () => {
     if (gameState.gameOver) {
-      navigate('/post-game-chat');
+      navigate('/view-rankings');
     } else {
       startNewRound();
       setSubmittedPrompt(false);
@@ -190,7 +191,7 @@ const GameRoom: React.FC = () => {
                 onClick={handleNextRound}
                 className="game-button mt-6"
               >
-                {gameState.gameOver ? 'See Final Results' : 'Next Challenge'}
+                {gameState.gameOver ? 'View Rankings' : 'Next Challenge'}
               </Button>
             </div>
           )}
@@ -223,7 +224,7 @@ const GameRoom: React.FC = () => {
             </div>
           </div>
           
-          <TeamRankings />
+          {/* Removed TeamRankings during gameplay */}
           
           <div className="game-card">
             <h3 className="text-lg font-semibold mb-2">Your Team</h3>

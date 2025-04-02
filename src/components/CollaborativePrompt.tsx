@@ -15,7 +15,7 @@ interface CollaborativePromptProps {
 const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({ 
   onSubmit, 
   previousPrompt = '', 
-  timeLimit = 120,
+  timeLimit = 60, // Changed to 60 seconds (1 minute)
   disabled = false
 }) => {
   const [prompt, setPrompt] = useState(previousPrompt);
@@ -75,8 +75,8 @@ const CollaborativePrompt: React.FC<CollaborativePromptProps> = ({
       // Pick a random prompt for this teammate
       const randomPrompt = potentialPrompts[Math.floor(Math.random() * potentialPrompts.length)];
       
-      // Set a random time for submission between 10 and 60 seconds
-      const randomSubmitTime = Math.floor(10 + Math.random() * 50);
+      // Set a random time for submission between 10 and 30 seconds (changed from 10-60)
+      const randomSubmitTime = Math.floor(10 + Math.random() * 20);
       setSimulatedSubmitTime(randomSubmitTime);
       
       // Create a more realistic typing simulation
