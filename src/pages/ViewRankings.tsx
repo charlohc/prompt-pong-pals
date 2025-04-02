@@ -91,9 +91,6 @@ const ViewRankings: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="text-2xl font-bold text-yellow-400">
-                    {team.score} pts
-                  </div>
                 </div>
               );
             })}
