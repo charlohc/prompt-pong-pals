@@ -20,7 +20,7 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({ prompts, showPlayer = tru
           <div key={index} className="game-card">
             {showPlayer && (
               <div className="text-sm text-gray-400 mb-1">
-                Player {prompt.player} prompted:
+                {prompt.playerName || `Player ${prompt.player}`} prompted:
               </div>
             )}
             <div className="prompt-font text-sm">

@@ -6,6 +6,7 @@ export type PlayerNumber = 2 | 3 | 4;
 export interface Prompt {
   text: string;
   player: number;
+  playerName?: string;
   aiResponse?: string;
   success?: boolean;
 }
@@ -222,10 +223,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!gameState || !currentTeam) return false;
     
     const evaluation = evaluatePrompt(promptText, gameState.target);
+    const activePlayer = currentTeam.players[currentTeam.currentPlayerIndex];
     
     const newPrompt: Prompt = {
       text: promptText,
       player: currentPlayerId,
+      playerName: activePlayer.name,
       aiResponse: evaluation.response,
       success: evaluation.success
     };
