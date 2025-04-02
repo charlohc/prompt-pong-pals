@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '@/contexts/GameContext';
 import CollaborativePrompt from '@/components/CollaborativePrompt';
 import AIResponse from '@/components/AIResponse';
 import TeamFeedback from '@/components/TeamFeedback';
+import PromptHistory from '@/components/PromptHistory';
 import { Button } from '@/components/ui/button';
-import { Users, Clock, Target } from 'lucide-react';
+import { Users, Clock, Target, History } from 'lucide-react';
 import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const GameRoom: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const GameRoom: React.FC = () => {
   const [showAIResponse, setShowAIResponse] = useState(false);
   const [isRoundComplete, setIsRoundComplete] = useState(false);
   const [inputDisabled, setInputDisabled] = useState(false);
+  const [showPromptHistory, setShowPromptHistory] = useState(false);
   
   useEffect(() => {
     if (!gameState || !currentTeam) {
@@ -50,12 +52,10 @@ const GameRoom: React.FC = () => {
   
   const handlePromptSubmit = async (prompt: string) => {
     if (!isCurrentPlayerActive && !submittedPrompt) {
-      // Handle simulated teammate submission
       const activePlayer = currentTeam.players[currentTeam.currentPlayerIndex];
       toast.info(`${activePlayer.name} submitted their prompt`);
       setSubmittedPrompt(true);
       
-      // Simulate API delay
       setTimeout(async () => {
         const success = await submitPrompt(prompt);
         
@@ -64,12 +64,11 @@ const GameRoom: React.FC = () => {
           toast.success(`${activePlayer.name}'s prompt was successful!`);
         } else {
           toast.info(`${activePlayer.name}'s prompt was submitted but not quite there yet. Next player's turn!`);
-          // Show feedback for 5 seconds instead of immediate reset
           setTimeout(() => {
             setSubmittedPrompt(false);
             setShowAIResponse(false);
             setInputDisabled(false);
-          }, 5000); // Changed from 3000 to 5000
+          }, 5000);
         }
       }, 1000);
       
@@ -90,12 +89,11 @@ const GameRoom: React.FC = () => {
       toast.success('Your prompt was successful!');
     } else {
       toast.info('Prompt submitted but not quite there yet. Next player\'s turn!');
-      // Show feedback for 5 seconds
       setTimeout(() => {
         setSubmittedPrompt(false);
         setShowAIResponse(false);
         setInputDisabled(false);
-      }, 5000); // Changed from 3000 to 5000
+      }, 5000);
     }
   };
   
@@ -134,10 +132,15 @@ const GameRoom: React.FC = () => {
               <h2 className="text-xl font-semibold">
                 Team Challenge
               </h2>
-              <div className="flex items-center text-sm text-gray-400">
-                <Clock size={14} className="mr-1" />
-                <span>Round {gameState.currentRound}/{gameState.totalRounds}</span>
-              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-400 hover:text-white flex items-center gap-1"
+                onClick={() => setShowPromptHistory(!showPromptHistory)}
+              >
+                <History size={14} />
+                {showPromptHistory ? 'Hide History' : 'Show History'}
+              </Button>
             </div>
             
             <div className="game-card bg-indigo-900/40 prompt-font">
@@ -151,6 +154,14 @@ const GameRoom: React.FC = () => {
               <p>{gameState.target}</p>
             </div>
           </div>
+          
+          {showPromptHistory && currentTeam.prompts.length > 0 && (
+            <div className="game-card bg-gray-800/50">
+              <ScrollArea className="h-60">
+                <PromptHistory prompts={currentTeam.prompts} showPlayer={true} />
+              </ScrollArea>
+            </div>
+          )}
           
           <div className="relative">
             <div className="border-b border-gray-700 mb-4"></div>
